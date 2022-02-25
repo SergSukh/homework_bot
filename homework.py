@@ -66,8 +66,8 @@ def get_api_answer(current_timestamp):
 def check_response(response):
     """Проверяем ответ сервера и готовим данные для финальной обработки."""
     """Проверка ответа на список словарей."""
-    homeworks = response['homeworks']
     try:
+        homeworks = response['homeworks']
         assert type(homeworks) is list
     except KeyError:
         message = 'Key Error in dictionary'
