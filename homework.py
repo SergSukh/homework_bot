@@ -78,12 +78,10 @@ def check_response(response):
         return message
     if not homeworks:
         message = ('The homework is empty')
-        logger.info(message)
         return message
     elif homeworks == []:
         message = ('The status of homework has empty list')
-        logger.info(message)
-        return 'Статус проверки работы на сервере не изменился'
+        return message
 
     """Опрос каждого словаря из списка."""
     message = ''
