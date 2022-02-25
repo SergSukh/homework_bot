@@ -37,7 +37,7 @@ logger.addHandler(handler)
 
 
 def send_message(bot, message):
-    """ Отправка сообщений ботом """
+    """Отправка сообщений ботом"""
     logger.info('the message has been sent to the addressee')
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
@@ -47,7 +47,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp):
-    """ Опрашиваем API, оцениваем дотсупность и получаем ответ """
+    """Опрашиваем API, оцениваем дотсупность и получаем ответ."""
     keys_to_check = ['homeworks', 'current_date']
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
@@ -64,9 +64,9 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
-    """ Проверяем ответ сервера и готовим данные для финальной обработки """
+    """Проверяем ответ сервера и готовим данные для финальной обработки."""
     message = ''
-    """ Проверка ответа на список словарей """
+    """Проверка ответа на список словарей."""
     try:
         homeworks = response['homeworks']
         assert type(homeworks) == list
@@ -77,14 +77,8 @@ def check_response(response):
         message = 'response -Not list '
         logger.debug(message)
         return message
-    try:
-        assert type(len(homeworks)) == int
-    except KeyError:
-        message = 'Key Error in dictionary'
-        logger.debug(message)
-    except TypeError:
-        message = 'TypeError'
-        logger.debug(message)
+    if type(len(homeworks)) != int:
+        raise TypeError
     if not homeworks:
         message = ('The status of homework has empty list')
         logger.info(message)
@@ -93,7 +87,7 @@ def check_response(response):
         logger.info(message)
         return 'Статус проверки работы на сервере не изменился'
 
-    """ Опрос каждого словаря из списка """
+    """Опрос каждого словаря из списка."""
     for i in range(len(homeworks)):
         try:
             homework = homeworks[i]
@@ -107,10 +101,10 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """ Проверка статуса работы, определяем переменные """
+    """Проверка статуса работы, определяем переменные."""
     keys_to_check = ['homework_name', 'status']
     message = ''
-    """Проверяем наличие соответствующих переменных в словаре"""
+    """Проверяем наличие соответствующих переменных в словаре."""
     for key in keys_to_check:
         if key not in homework:
             raise KeyError
@@ -128,7 +122,7 @@ def parse_status(homework):
 
 
 def check_tokens():
-    """Для проверки используем os.environ в случае ошибки - False"""
+    """Для проверки используем os.environ в случае ошибки - False."""
     env_vars = ['PRACTICUM_TOKEN', 'TELEGRAM_TOKEN', 'TELEGRAM_CHAT_ID']
     check = False
     try:
@@ -153,7 +147,7 @@ def check_tokens():
 
 def main():
     """Основная логика работы бота."""
-    """Определяем наличие всех переменных"""
+    """Определяем наличие всех переменных."""
     try:
         check = check_tokens()
     except AssertionError:
@@ -164,7 +158,7 @@ def main():
     current_timestamp = int(time.time())
     prev_message = ''
 
-    """А тут бесконечный циклб прерывается только в случае токенов"""
+    """А тут бесконечный циклб прерывается только в случае токенов."""
     while True:
         if not check:
             break
