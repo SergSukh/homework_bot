@@ -27,7 +27,7 @@ HOMEWORK_STATUSES = {
 }
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter(
     '%(asctime)s %(levelname)s %(message)s'
@@ -37,7 +37,7 @@ logger.addHandler(handler)
 
 
 def send_message(bot, message):
-    """Отправка сообщений ботом"""
+    """Отправка сообщений ботом."""
     logger.info('the message has been sent to the addressee')
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
@@ -80,8 +80,9 @@ def check_response(response):
     if type(len(homeworks)) != int:
         raise TypeError
     if not homeworks:
-        message = ('The status of homework has empty list')
+        message = ('The homework is empty')
         logger.info(message)
+        return message
     elif homeworks == []:
         message = ('The status of homework has empty list')
         logger.info(message)
