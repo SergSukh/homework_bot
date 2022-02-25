@@ -9,6 +9,7 @@ class API_Status(Exception):
         self.message = f'Server is unavailable, code {self.status_code}'
         return self.message
 
+
 class HomeWorkKeyError(Exception):
     def __init__(self, key) -> None:
         self.key = key
@@ -17,3 +18,11 @@ class HomeWorkKeyError(Exception):
     def __str__(self) -> str:
         self.message = f'Homework {self.key} Error in API Server response'
         return self.message
+
+
+class BotSendMessageError(Exception):
+    def __init__(self) -> None:
+        super().__init__(self)
+
+    def __str__(self):
+        return 'Message don`t send'
