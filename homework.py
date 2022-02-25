@@ -66,9 +66,9 @@ def get_api_answer(current_timestamp):
 def check_response(response):
     """Проверяем ответ сервера и готовим данные для финальной обработки."""
     """Проверка ответа на список словарей."""
+    homeworks = response['homeworks']
     try:
-        homeworks = response['homeworks']
-        assert type(homeworks) == list
+        assert type(homeworks) is list
     except KeyError:
         message = 'Key Error in dictionary'
         logger.debug(message)
@@ -76,8 +76,6 @@ def check_response(response):
         message = 'response -Not list '
         logger.debug(message)
         return message
-    if type(len(homeworks)) != int:
-        raise TypeError
     if not homeworks:
         message = ('The homework is empty')
         logger.info(message)
