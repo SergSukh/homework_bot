@@ -65,7 +65,6 @@ def get_api_answer(current_timestamp):
 
 def check_response(response):
     """Проверяем ответ сервера и готовим данные для финальной обработки."""
-    message = ''
     """Проверка ответа на список словарей."""
     try:
         homeworks = response['homeworks']
@@ -89,6 +88,7 @@ def check_response(response):
         return 'Статус проверки работы на сервере не изменился'
 
     """Опрос каждого словаря из списка."""
+    message = ''
     for i in range(len(homeworks)):
         try:
             homework = homeworks[i]
@@ -97,7 +97,10 @@ def check_response(response):
             logger.debug('Key Error in dictionary')
             message = 'Key Error in dictionary'
             break
-
+        except TypeError:
+            logger.debug('Type Error in dictionary')
+            message = 'Type Error in dictionary'
+            break
     return message
 
 
