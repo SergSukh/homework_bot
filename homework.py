@@ -96,7 +96,7 @@ def check_response(response):
             homework = homeworks[hw]
             message += parse_status(homework)
         except Exception as error:
-            message = f'For homework[{hw}] {error} in list dictionary'
+            message += f'For homework[{hw}] {error} in list dictionary'
             logger.debug(message)
     return message
 
