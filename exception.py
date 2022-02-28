@@ -1,12 +1,10 @@
-
-
 class API_Status(Exception):
-    def __init__(self, response):
-        self.status_code = response.status_code
-        super().__init__(self.status_code)
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
 
     def __str__(self):
-        self.message = f'Server is unavailable, code {self.status_code}'
+        self.message = f'Server is unavailable, {self.message}'
         return self.message
 
 

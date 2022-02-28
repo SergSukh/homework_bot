@@ -5,6 +5,7 @@ import logging
 import time
 import telegram
 
+from http import HTTPStatus
 from dotenv import load_dotenv
 import exception
 
@@ -38,12 +39,15 @@ logger.addHandler(handler)
 
 def send_message(bot, message):
     """Отправка сообщений ботом."""
-    logger.info('the message has been sent to the addressee')
     try:
+        message = message[:4095]
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+        logger.info('the message has been sent to the addressee')
+        send = True
     except exception.BotSendMessageError:
+        send = False
         logger.debug('message don`t send')
-    return
+    return send
 
 
 def get_api_answer(current_timestamp):
@@ -51,10 +55,14 @@ def get_api_answer(current_timestamp):
     keys_to_check = ['homeworks', 'current_date']
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
-    response = requests.get(url=ENDPOINT, headers=HEADERS, params=params)
-    if response.status_code != 200:
-        raise exception.API_Status
-    logger.info('get api answer success in module <get_api_answer>')
+    try:
+        response = requests.get(url=ENDPOINT, headers=HEADERS, params=params)
+        status_code = response.status_code
+        message = HTTPStatus(status_code).description
+        if response.status_code != 200:
+            logger.exception(message)
+    except exception.API_Status(message):
+        response = []
     response = response.json()
     for key in keys_to_check:
         if key not in response:
@@ -68,35 +76,27 @@ def check_response(response):
     """Проверка ответа на список словарей."""
     try:
         homeworks = response['homeworks']
-        assert type(homeworks) is list
     except KeyError:
         message = 'Key Error in dictionary'
         logger.debug(message)
-    except TypeError:
+        raise KeyError(message)
+    if not isinstance(homeworks, list):
         message = 'response -Not list '
         logger.debug(message)
-        return message
-    if not homeworks:
-        message = ('The homework is empty')
-        return message
-    elif homeworks == []:
-        message = ('The status of homework has empty list')
+        raise TypeError(message)
+    if not homeworks or homeworks == []:
+        message = 'The homework is empty'
         return message
 
     """Опрос каждого словаря из списка."""
     message = ''
-    for i in range(len(homeworks)):
+    for hw in range(len(homeworks)):
         try:
-            homework = homeworks[i]
+            homework = homeworks[hw]
             message += parse_status(homework)
         except KeyError:
-            logger.debug('Key Error in dictionary')
-            message = 'Key Error in dictionary'
-            break
-        except TypeError:
-            logger.debug('Type Error in dictionary')
-            message = 'Type Error in dictionary'
-            break
+            message = f'For homework[{hw}] Key Error in list dictionary'
+            logger.debug(message)
     return message
 
 
@@ -108,14 +108,13 @@ def parse_status(homework):
     for key in keys_to_check:
         if key not in homework:
             raise KeyError
-    homework_name = homework['homework_name']
+    homework_name = homework.get('homework_name')
     if homework_name is None:
         raise exception.HomeWorkKeyError
     homework_status = homework['status']
     if (homework_status is None) or (homework_status not in HOMEWORK_STATUSES):
         raise KeyError
-    else:
-        verdict = HOMEWORK_STATUSES[homework_status] or homework_status
+    verdict = HOMEWORK_STATUSES[homework_status] or homework_status
     message = f'Изменился статус проверки работы "{homework_name}". {verdict}'
     return message
 
@@ -127,40 +126,38 @@ def check_tokens():
     try:
         for v in env_vars:
             os.environ.get(v)
-        assert PRACTICUM_TOKEN is not None
-        assert TELEGRAM_TOKEN is not None
-        assert TELEGRAM_CHAT_ID is not None
+        if (PRACTICUM_TOKEN is None) or \
+           (TELEGRAM_TOKEN is None) or \
+           (TELEGRAM_CHAT_ID is None):
+            logger.critical('CHAT_ID is None. System Error')
+            raise SystemError
     except Exception as e:
         logger.exception(
             f'{e} check the variables the variable is not defined')
     else:
         logger.info('Tokens loaded successfully.')
         check = True
-    try:
-        assert check is True
-    except Exception as e:
-        logger.exception(f'{e} Tokens isn`t loaded..')
+    if check:
+        return True
+    else:
+        logger.exception('Tokens isn`t loaded..')
         return False
-    return True
 
 
 def main():
     """Основная логика работы бота."""
-    """Определяем наличие всех переменных."""
-    try:
-        check = check_tokens()
-    except AssertionError:
+    """Запрашиваем наличие всех переменных."""
+    if not check_tokens():
         logger.critical('Security check failed')
+        raise SystemExit
     else:
         logger.info('Loaded success')
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     prev_message = ''
 
-    """А тут бесконечный циклб прерывается только в случае токенов."""
+    """А тут бесконечный цикл."""
     while True:
-        if not check:
-            break
         try:
             response = get_api_answer(current_timestamp)
             current_timestamp = response['current_date']
@@ -169,8 +166,8 @@ def main():
         else:
             message = check_response(response)
         if message != prev_message and message != '':
-            send_message(bot, message)
-            prev_message = message
+            if send_message(bot, message):
+                prev_message = message
         time.sleep(RETRY_TIME)
 
 
