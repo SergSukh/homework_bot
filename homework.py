@@ -16,6 +16,7 @@ TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 RETRY_TIME = 600
+MESSEGE_MAX_LENGTH = 4095
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
@@ -39,7 +40,7 @@ logger.addHandler(handler)
 def send_message(bot, message):
     """Отправка сообщений ботом."""
     try:
-        message = message[:4095]
+        message = message[:MESSEGE_MAX_LENGTH]
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
         logger.info('the message has been sent to the addressee')
         send = True
