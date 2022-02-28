@@ -3,12 +3,11 @@ import sys
 import requests
 import logging
 import time
-import telegram
 
 from http import HTTPStatus
 from dotenv import load_dotenv
 import exception
-
+import telegram
 
 load_dotenv()
 
@@ -52,7 +51,6 @@ def send_message(bot, message):
 
 def get_api_answer(current_timestamp):
     """Опрашиваем API, оцениваем дотсупность и получаем ответ."""
-    keys_to_check = ['homeworks', 'current_date']
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     try:
@@ -63,18 +61,19 @@ def get_api_answer(current_timestamp):
             logger.exception(message)
             raise exception.API_Status(message)
     except exception.API_Status(message):
-        response = []
+        logger.exception(message)
     response = response.json()
-    for key in keys_to_check:
-        if key not in response:
-            logger.debug(f'api answer dictionary haven`t key {key}')
-
     return response
 
 
 def check_response(response):
     """Проверяем ответ сервера и готовим данные для финальной обработки."""
+    keys_to_check = ['homeworks', 'current_date']
     """Проверка ответа на список словарей."""
+    for key in keys_to_check:
+        if key not in response:
+            logger.debug(f'api answer dictionary haven`t key {key}')
+
     try:
         homeworks = response['homeworks']
     except KeyError:
@@ -122,15 +121,12 @@ def parse_status(homework):
 
 def check_tokens():
     """Для проверки используем os.environ в случае ошибки - False."""
-    env_vars = ['PRACTICUM_TOKEN', 'TELEGRAM_TOKEN', 'TELEGRAM_CHAT_ID']
     check = False
     try:
-        for v in env_vars:
-            os.environ.get(v)
-        if (PRACTICUM_TOKEN is None) or \
-           (TELEGRAM_TOKEN is None) or \
-           (TELEGRAM_CHAT_ID is None):
-            logger.critical('CHAT_ID is None. System Error')
+        if ((PRACTICUM_TOKEN is None)
+           or (TELEGRAM_TOKEN is None)
+           or (TELEGRAM_CHAT_ID is None)):
+            logger.critical('Some variable is missing. System Error')
             raise SystemError
     except Exception as e:
         logger.exception(
@@ -140,9 +136,8 @@ def check_tokens():
         check = True
     if check:
         return True
-    else:
-        logger.exception('Tokens isn`t loaded..')
-        return False
+    logger.exception('Tokens isn`t loaded..')
+    return False
 
 
 def main():
@@ -151,8 +146,7 @@ def main():
     if not check_tokens():
         logger.critical('Security check failed')
         raise SystemExit
-    else:
-        logger.info('Loaded success')
+    logger.info('Loaded success')
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     prev_message = ''
