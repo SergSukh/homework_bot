@@ -156,10 +156,9 @@ def main():
         try:
             response = get_api_answer(current_timestamp)
             current_timestamp = response['current_date']
+            message = check_response(response)
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-        else:
-            message = check_response(response)
         if message != prev_message and message != '':
             if send_message(bot, message):
                 prev_message = message
