@@ -61,6 +61,7 @@ def get_api_answer(current_timestamp):
         message = HTTPStatus(status_code).description
         if response.status_code != 200:
             logger.exception(message)
+            raise exception.API_Status(message)
     except exception.API_Status(message):
         response = []
     response = response.json()
@@ -94,8 +95,8 @@ def check_response(response):
         try:
             homework = homeworks[hw]
             message += parse_status(homework)
-        except KeyError:
-            message = f'For homework[{hw}] Key Error in list dictionary'
+        except Exception as error:
+            message = f'For homework[{hw}] {error} in list dictionary'
             logger.debug(message)
     return message
 
