@@ -151,6 +151,7 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     current_timestamp = int(time.time())
     prev_message = ''
+    prev_error_message = ''
 
     """А тут бесконечный цикл."""
     while True:
@@ -158,11 +159,15 @@ def main():
             response = get_api_answer(current_timestamp)
             current_timestamp = response['current_date']
             message = check_response(response)
+            if message != prev_message and message != '':
+                if send_message(bot, message):
+                    prev_message = message
         except Exception as error:
-            message = f'Сбой в работе программы: {error}'
-        if message != prev_message and message != '':
-            if send_message(bot, message):
-                prev_message = message
+            error_message = f'Сбой в работе программы: {error}'
+            logger.exception(error_message)
+            if error_message != prev_error_message:
+                if send_message(bot, error_message):
+                    prev_error_message = message
         time.sleep(RETRY_TIME)
 
 
