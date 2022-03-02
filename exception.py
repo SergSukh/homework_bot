@@ -4,7 +4,7 @@ class API_Status(Exception):
         super().__init__(self.message)
 
     def __str__(self):
-        self.message = f'Server is unavailable, {self.message}'
+        self.message = f'server is unavailable {self.message}'
         return self.message
 
 

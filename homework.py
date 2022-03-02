@@ -6,7 +6,7 @@ import time
 
 from http import HTTPStatus
 from dotenv import load_dotenv
-import exception
+from exception import API_Status, BotSendMessageError, HomeWorkKeyError
 import telegram
 
 load_dotenv()
@@ -44,7 +44,7 @@ def send_message(bot, message):
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
         logger.info('the message has been sent to the addressee')
         send = True
-    except exception.BotSendMessageError:
+    except BotSendMessageError:
         send = False
         logger.debug('message don`t send')
     return send
@@ -58,11 +58,13 @@ def get_api_answer(current_timestamp):
         response = requests.get(url=ENDPOINT, headers=HEADERS, params=params)
         status_code = response.status_code
         message = HTTPStatus(status_code).description
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK.value:
             logger.exception(message)
-            raise exception.API_Status(message)
-    except exception.API_Status(message):
-        logger.exception(message)
+            raise API_Status(message)
+    except Exception as error:
+        error_message = HTTPStatus(status_code).description
+        logger.exception(error)
+        raise API_Status(error_message)
     response = response.json()
     return response
 
@@ -111,7 +113,7 @@ def parse_status(homework):
             raise KeyError
     homework_name = homework.get('homework_name')
     if homework_name is None:
-        raise exception.HomeWorkKeyError
+        raise HomeWorkKeyError
     homework_status = homework['status']
     if (homework_status is None) or (homework_status not in HOMEWORK_STATUSES):
         raise KeyError
@@ -167,7 +169,7 @@ def main():
             logger.exception(error_message)
             if error_message != prev_error_message:
                 if send_message(bot, error_message):
-                    prev_error_message = message
+                    prev_error_message = error_message
         time.sleep(RETRY_TIME)
 
 
